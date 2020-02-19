@@ -1,79 +1,65 @@
 #!/usr/bin/env pybricks-micropython
-
-from pybricks import ev3brick as brick
+from pybricks.hubs import EV3Brick
 from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor,
                                  InfraredSensor, UltrasonicSensor, GyroSensor)
-from pybricks.parameters import (Port, Stop, Direction, Button, Color,
-                                 SoundFile, ImageFile, Align)
-from pybricks.tools import print, wait, StopWatch
+from pybricks.parameters import Port, Stop, Direction, Button, Color
+from pybricks.tools import wait, StopWatch
 from pybricks.robotics import DriveBase
-from pybricks.iodevices import UARTDevice
-
+from pybricks.media.ev3dev import SoundFile, ImageFile
 
 # Write your program here
-brick.sound.beep()
+ev3 = EV3Brick()
+ev3.speaker.beep()
 
-uart = UARTDevice(Port.S4, 9600, timeout=2000)
-driveMotor = Motor(Port.D)
-lightSens = ColorSensor(Port.S1)
-xMotor = Motor(Port.C)
-spdx = 1400
-spdy = 300
-angx = -16150
-angy = -300
-offset = 20
+# '''
+# This reads the USB serial line on the EV3 as fast as possible
+# and assumes that data is coming from the Arduino much faster
+# than we can read it - so it grabs all the data, splits it up into an array,
+# and then takes the second to last element of that array to get an
+# array of accelerations and angular accelerations.
+# The 6 elements are:
+#      x acceleration
+#      y acceleration
+#      z acceleration
+#      x gyro
+#      y gyro
+#      z gyro
+     
+# Note that I take the second to last line because the last line might be incomplete
+# (who knows where in the serial transmission the line is when I do the read).
+# '''
 
-def Calibrate():
-    startVal = lightSens.reflection()
-    thres = startVal - offset
-    return thres
-    
+count = 0
+imumeans = [0, 0, 0, 0, 0, 0]
 
-def DriveX(speedx,anglex,thres):
-    xMotor.reset_angle(0)
-    while xMotor.angle() > anglex:
-        xMotor.run(-speedx)
-        #print(lightSens.reflection())
-        #trigger motor if dark
-        currentVal = lightSens.reflection()
-        if currentVal < thres:
-            print('uart is writing')
-            uart.write('T')
-
-    print('turning around')
-    xMotor.stop(stop_type = Stop.BRAKE)
-    wait(10)
-    xMotor.reset_angle(0)
-
-    while xMotor.angle() < -anglex:
-        xMotor.run(speedx)
-    xMotor.stop(stop_type = Stop.BRAKE)
-    uart.write('C')
-    print('finished scanning')
-    
-
-
-def DriveY(speedy,angley):
-    driveMotor.run_angle(speedy,angley)
-    uart.write('C')
-    print('finished scanning')
-
-
-#make it all happen!
-uart.clear()
-thres = Calibrate()
-print('thres = ')
-print(thres)
+import serial
+s=serial.Serial("/dev/ttyACM0",9600)
 
 while True:
-    if uart.waiting() >= 1:
-        msg = uart.read(1)
-        msg = str(msg)
-        print(msg)
-        if msg[2] == 'x':
-            print(angx)
-            DriveX(spdx, angx, thres)
-        elif msg[2] == 'y':
-            DriveY(spdy, angy)
-        else:
-            uart.clear()
+     data=s.read(s.inWaiting()).decode("utf-8")
+     #print('size = %d, buffer = %d' % (len(data),s.inWaiting()))
+     if len(data) != 0:
+        data = data.splitlines()
+        imu = data[0].split(',')
+        #print(data)
+        #print(imu)
+
+        if imu == ['']:
+            continue
+
+        count = count+1
+        try:
+            for i in range(len(imu)):
+                #print(type(imu[i]))
+                #print(imu[i])
+                imu[i] = float(imu[i])
+
+            #print(type(imu[0]))
+            for means in range(len(imumeans)):
+                imumeans[means] = (imumeans[means]+imu[means])/(count)
+
+        except:
+            print("ERROR")
+            print(data)
+            print(imu)
+            print(type(imu[0]))
