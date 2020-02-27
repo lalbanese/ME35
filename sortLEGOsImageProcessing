@@ -1,0 +1,104 @@
+### Setup:
+
+# Import Libraries:
+import numpy
+import cv2
+import PIL.Image
+from io import BytesIO
+import IPython.display
+import imutils
+from matplotlib import pyplot as plt
+import serial
+import time 
+
+print('Imported Libraries')
+
+# Open VideoCapture:
+# cap = cv2.VideoCapture(0)
+# print('Opened VideoCapture')
+
+# Establish Serial Connection:
+s = serial.Serial("/dev/serial0",9600,timeout=200)
+s.write("h".encode())
+s.read(s.inWaiting())
+print('Ran Serial Connection')
+
+# Establish Display Locations:
+d1 = IPython.display.display("Your ORIGINAL image will be displayed here", 
+                             display_id=1)
+d2 = IPython.display.display("Here is the BINARY picture", 
+                             display_id=2)
+print('Established Display Locations')
+
+def array_to_image(a, fmt='jpeg'):
+    f = BytesIO()
+    PIL.Image.fromarray(a).save(f, fmt)    
+    return IPython.display.Image(data=f.getvalue())
+
+def BinaryThreshold (array):
+    lowerthresh = numpy.array([100,0,0])
+    upperthresh = numpy.array([255, 50, 50])
+    ThreshArray = cv2.inRange(array,lowerthresh,upperthresh)
+    return ThreshArray
+
+print("Ready")
+
+def ReadSerial():
+    msg = 0
+    try:
+        msg = s.read(1)
+        msg = msg.decode('utf-8')
+        print(msg)
+        return msg
+    except:
+        print("Could Not Read Serial") 
+        
+while True:
+    go = ReadSerial()
+
+    if go == 'P':
+
+        cap = cv2.VideoCapture(0)
+        print('Opened VideoCapture')
+        
+        ret, frame = cap.read()
+
+        print("Read frame")
+        frame = imutils.resize(frame, width=200, inter=cv2.INTER_LINEAR)
+        print("Resized frame")
+
+        array = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        image = array_to_image(array)
+
+        d1.update(image)
+        #time.sleep(10)
+        print("updated image")
+
+        BinaryArray = BinaryThreshold(array)
+
+        image = array_to_image(BinaryArray)
+
+        d2.update(image)
+        #time.sleep(10)
+
+        sum = numpy.sum(BinaryArray)
+        print(sum)
+
+        if sum > 10000:
+            try:
+                s.write('R'.encode())
+                print("Wrote to Libby")
+            except:
+                print("failed R")
+        else:
+            try:
+                s.write('N'.encode())
+                print("Wrote to Libby")
+            except:
+                print("failed N")
+        #time.sleep(10)
+        
+        cap.release()
+        print("Released videocapture")
+        
+        #time.sleep(10)
