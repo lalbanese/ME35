@@ -4,7 +4,7 @@ import json as ujson
 import requests as urequests
 import time as utime
      
-Key = 'KjpPmCDIP1kKpJ9BiDddyDbG-a7pRlJLi12IBShHtJ'
+Key = 'Insert Key Here'
 
 def GetFunFact():
      urlBase = 'http://catfact.ninja'
