@@ -13,7 +13,7 @@ from pybricks.robotics import DriveBase
 
 import ubinascii, ujson, urequests, utime
      
-Key = 'KjpPmCDIP1kKpJ9BiDddyDbG-a7pRlJLi12IBShHtJ'
+Key = 'Insert Key Here'
      
 def SL_setup():
      urlBase = "https://api.systemlinkcloud.com/nitag/v2/tags/"
