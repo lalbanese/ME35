@@ -14,7 +14,7 @@ ev3.speaker.beep()
 
 import ubinascii, ujson, urequests, utime
      
-Key = 'KjpPmCDIP1kKpJ9BiDddyDbG-a7pRlJLi12IBShHtJ'
+Key = 'Insert Key Here'
 
 #system link setup:     
 def SL_setup():
