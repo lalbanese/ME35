@@ -1,0 +1,7 @@
+0 Gear
+1 L
+2 Three
+3 Long
+4 H
+5 Angle135
+6 Nothing
